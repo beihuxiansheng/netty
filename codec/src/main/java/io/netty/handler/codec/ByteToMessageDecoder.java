@@ -252,6 +252,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    	System.out.println("ByteToMessageDecoder is " + this);
         if (msg instanceof ByteBuf) {
             CodecOutputList out = CodecOutputList.newInstance();
             try {
@@ -406,9 +407,41 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
      */
     protected void callDecode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         try {
+        	//这里的in为ByteBuf,是根据我们在AbstractNioByteChannel.NioByteUnsafe.read()方法里面
+        	//根据,boss线程交给worker线程的NioSocketChannel来读取数据,用do while循环读取,每读取一次,就往ByteBuf里面放一次,
+        	//每放一次,就会往下传递一次,传递的时候就会传递到这里了,ByteBuf里面存的是一次循环所读取出来的数据
+        	//当然,如果是运行JUnitTest,就另当别论了
             while (in.isReadable()) {
                 int outSize = out.size();
 
+                //如果outSize>0,那么就意味着什么呢?
+                //意味着,我们完整的解析出来了一些东西,现在可以把解析的这个完整的东西继续往下传递了,比如说json,我们完整的解析出来了一个json
+                //所以这里就和我们自己定义的协议有很大的关系 了,你的协议定义,怎么才算一个完整的东西?比如说json,这个json解码到什么程度算一个完整的json?然后我才可以把这个完整的json往下传递
+                //在dubbo里面,我们的consuemr和provider默认只有一条长连接,但是在这个一条长连接上,我们的consumer可能每秒会向provider发送上万次调用请求
+                //那么这上万次的调用请求,都是靠着这一个NioSocketChannel来处理
+                //当我们provider端要从这个Channel上读取的数据的时候,我们就必须要知道,我读到哪算完毕,完毕是什么意思呢?就是我读到哪我就知道这是上万次调用请求的其中一个完整的请求了
+                /**	
+                 * 						                     一条NioSocketChannel(一条长连接里面的数据,可能这10000条信息都还没来得及处理,在channel里面放着)
+                 * -------------------------------------------------------------------------------------------------------------------------------------------
+                 *|     method1 data          method2 data               method3 data           method4 data          .........        method10000 data       |
+                 * -------------------------------------------------------------------------------------------------------------------------------------------
+                 * 
+                 * 其中,每一个method data,在从consumer发向provider的时候,两两之间不可能有交叉的,什么意思呢?    如下图
+                 * -------------------------------------------------------------------------------------------------------------------------------------------
+                 *|    memethod 2 da          tathod1 data               ............................................................  od110000dat aata       |
+                 * -------------------------------------------------------------------------------------------------------------------------------------------
+                 * 看上面的这个图,在provider的NioSocketChannel读取其身上接收到的数据的时候,读到了这样的数据,也就是method1 data读到me,然后就被中断了,它后面接着成了method2 data的信息了
+                 * 然后method1 data的剩余信息,被接到了method2 data的后面
+                 * 这样信息就不完整了,是不允许出现的
+                 */
+                //然后我把这个完整的请求往下传递,找到我真正要调用的provider端的指定方法,进行方法调用
+                //然后在这条连接上,provider向consumer端返回数据的时候也是一样的,返回的时候,也是在这条连接上进行返回的
+                //那么,我返回的时候要进行编码,进行编码的一方其实是指定协议的一方,什么意思呢?
+                //我provider把我返回的数据按照这样的方式跟你进行编码了,那么你consumer端在接收到我provider发送给你的经过编码的数据后
+                //你就得按照我编码的规则来进行解码,这样你才知道,你在解码到什么位置的时候,知道这是一个完整的返回数据了,就可以把这个完整的返回数据,往channel的pipeline上进行传递了
+                //最后传递到末尾后,作为结果展示给consumer端了
+                //总结以上,涉及到两点
+                //1.编解码	2.粘包拆包
                 if (outSize > 0) {
                     fireChannelRead(ctx, out, outSize);
                     out.clear();
@@ -425,6 +458,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
                 }
 
                 int oldInputLength = in.readableBytes();
+                //解码后再进行其他处理工作,解码算是一个保护的动作,保证后面的handler接收到的数据是正确的,根据规则来的
                 decodeRemovalReentryProtection(ctx, in, out);
 
                 // Check if this handler was removed before continuing the loop.
