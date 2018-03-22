@@ -40,23 +40,34 @@ public class EchoClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    	System.out.println("client channelActive 成功");
         ctx.writeAndFlush(firstMessage);
+//    	System.out.println("client channelActive 成功");
+//    	super.channelActive(ctx);
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    	System.out.println("client channelRead 成功");
         ctx.write(msg);
+//    	System.out.println("client channelRead 成功");
+//    	super.channelRead(ctx, msg);
     }
 
     @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) {
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+    	System.out.println("client channelReadComplete 成功");
        ctx.flush();
+//    	System.out.println("client channelReadComplete 成功");
+//    	super.channelReadComplete(ctx);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+//    	System.out.println("client exceptionCaught 成功");
         // Close the connection when an exception is raised.
+    	System.out.println("client exceptionCaught 成功");
         cause.printStackTrace();
         ctx.close();
     }
