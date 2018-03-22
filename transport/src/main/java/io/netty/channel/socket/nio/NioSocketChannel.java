@@ -342,6 +342,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
     protected int doReadBytes(ByteBuf byteBuf) throws Exception {
         final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
         allocHandle.attemptedBytesRead(byteBuf.writableBytes());
+        //将boss线程传递给worker线程的NioSocketChannel里面的数据交给byteBuf容器,但是这个方法是在一个do while循环里面
         return byteBuf.writeBytes(javaChannel(), allocHandle.attemptedBytesRead());
     }
 

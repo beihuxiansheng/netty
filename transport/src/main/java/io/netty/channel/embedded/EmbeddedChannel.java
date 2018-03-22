@@ -249,6 +249,7 @@ public class EmbeddedChannel extends AbstractChannel {
 
     /**
      * Returns the {@link Queue} which holds all the {@link Object}s that were received by this {@link Channel}.
+     * 返回保存此通道接收的所有对象的队列
      */
     public Queue<Object> inboundMessages() {
         if (inboundMessages == null) {
@@ -321,12 +322,18 @@ public class EmbeddedChannel extends AbstractChannel {
         }
 
         ChannelPipeline p = pipeline();
+        //感觉这里的for循环相当于是AbstractNioMessageChannel.NioMessageUnsafe.read()方法里面的for循环,但是那里面for循环的是NioSocketChannel,这里不是
+        //上面的解释是错误的,但还是留着吧,因为上面的那个是netty boss线程的工作,而非worker线程的工作,boss线程for循环的是NioSocketChannel
+        //而netty worker线程for循环的是
+        //这里for循环的是UnpooledByteBufAllocator$InstrumentedUnpooledUnsafeHeapByteBuf,还是有些区别的
         for (Object m: msgs) {
             p.fireChannelRead(m);
         }
 
         flushInbound(false, voidPromise());
-        return isNotEmpty(inboundMessages);
+        boolean isNotEmpty = isNotEmpty(inboundMessages);
+        System.out.println("isNotEmpty " + isNotEmpty);
+        return isNotEmpty;
     }
 
     /**

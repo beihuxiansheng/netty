@@ -24,6 +24,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.TooLongFrameException;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelHandler.Sharable;
 
 import java.util.List;
 

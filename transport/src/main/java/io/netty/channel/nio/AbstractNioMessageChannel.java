@@ -90,6 +90,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 int size = readBuf.size();
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
+                    //这里面for循环的是NioSocketChannel,readBuf里面存的是NioSocketChannel,每for循环一次,就会提交一个任务给worker线程
                     pipeline.fireChannelRead(readBuf.get(i));
                 }
                 readBuf.clear();
