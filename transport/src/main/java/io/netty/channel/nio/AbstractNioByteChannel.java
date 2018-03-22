@@ -110,6 +110,11 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
             }
         }
 
+        /**
+         * NioSocketChannel身上的unsafe.read()方法所进入的方法体,所在类是:AbstractNioByteChannel
+         * 和NioServerSocketChannel身上的unsafe.read()方法所进入的方法体是不一样的,所在类是:AbstractNioMessageChannel
+         * boss线程给worker线程一个NioSocketChannel,worker线程拿着这个NioSocketChannel进行读取数据,把数据读到bytebuf里面
+         */
         @Override
         public final void read() {
             final ChannelConfig config = config();

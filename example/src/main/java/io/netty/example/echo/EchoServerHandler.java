@@ -26,17 +26,24 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 public class EchoServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    	System.out.println("server接收到clinet端的请求");
         ctx.write(msg);
+//    	System.out.println("server接收到clinet端的请求");
+//    	super.channelRead(ctx, msg);
     }
 
     @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) {
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+    	System.out.println("server端读取完毕");
         ctx.flush();
+//    	System.out.println("server端读取完毕");
+//    	super.channelReadComplete(ctx);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+    	System.out.println("server端发生异常");
         // Close the connection when an exception is raised.
         cause.printStackTrace();
         ctx.close();

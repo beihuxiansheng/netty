@@ -36,11 +36,19 @@ public class JsonObjectDecoderTest {
         String objectPart3 = "\"Doe\", age:22   \n}";
 
         // Test object
+        //writeInbound相当于是远程发送过来的请求(在远端准备的数据)
         ch.writeInbound(Unpooled.copiedBuffer("  \n\n  " + objectPart1, CharsetUtil.UTF_8));
         ch.writeInbound(Unpooled.copiedBuffer(objectPart2, CharsetUtil.UTF_8));
         ch.writeInbound(Unpooled.copiedBuffer(objectPart3 + "   \n\n  \n", CharsetUtil.UTF_8));
+        //上面读取完一个完整的json后,把这个json对象放到queue里
 
+        //ch.readInbound相当于是读取远端发送过来的数据
         ByteBuf res = ch.readInbound();
+        //从queue里面获取一个对象了,也就是上面存放的json对象,如果上面有错误,即:我们没有一个完整的json对象解析出来,那么我们就从队列里面获取不到值了
+        //我们做测试的时候,是把解析到的值放到了queue里面,但是真正的生产环境,这个被解析到的值放到哪去了呢?
+        //应该是直接传递给了我们的业务线程池了,那么这个值又是在何时被释放的呢?从channel里面释放--->难道是自动释放的?因为我们从channel读走了,也就不可能再从channel里面的读到我们已经读走的那些数据了
+        //因为毕竟处理完毕它之后,就不能再继续处理它一次了,如果这样的话就乱了
+        System.out.println("res is " + res);
         assertEquals(objectPart1 + objectPart2 + objectPart3, res.toString(CharsetUtil.UTF_8));
         res.release();
 

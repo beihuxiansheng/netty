@@ -940,6 +940,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline fireChannelRead(Object msg) {
+    	//不管是用EmbeddedChannel还是我们真正的Channel(不是测试的channel),都会走到这个方法里面
+    	//把读到bytebuf里面的数据,作为message往pipeline中进行传递(pipeline上的context保存着链条的前后关系)
         AbstractChannelHandlerContext.invokeChannelRead(head, msg);
         return this;
     }
